@@ -1,0 +1,198 @@
+<mxfile host="app.diagrams.net" modified="2026-09-27T12:15:00.000Z" agent="Antigravity" version="26.0.0">
+  <diagram id="ecommerce-mvp" name="MVP Architecture">
+    <mxGraphModel dx="1600" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Header -->
+        <mxCell id="title" value="E-Commerce Data Lakehouse — Production Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="350" y="25" width="900" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="Decoupled Streaming &amp; Batch Lakehouse | Kafka &amp; PySpark Ingestion | S3-Backed Delta Lake Storage" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=13;fontColor=#64748B;" vertex="1" parent="1">
+          <mxGeometry x="350" y="65" width="900" height="25" as="geometry"/>
+        </mxCell>
+
+        <!-- 1. Order Service (Producer) -->
+        <mxCell id="order" value="&lt;b&gt;Order Service&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;(Event Producer)&lt;br&gt;Microservice API&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="50" y="150" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="order_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg;" vertex="1" parent="order">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 2. Apache Kafka (Topic: orders) -->
+        <mxCell id="kafka" value="&lt;b&gt;Apache Kafka&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Topic: orders&lt;br&gt;Managed MSK Cluster&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#F59E0B;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="150" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="kafka_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachekafka/apachekafka-original.svg;" vertex="1" parent="kafka">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 3. Streaming Ingestion (PySpark) -->
+        <mxCell id="ingestion" value="&lt;b&gt;Data Ingestion&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;PySpark Structured&lt;br&gt;Streaming Micro-batches&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="680" y="150" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="ingestion_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachespark/apachespark-original.svg;" vertex="1" parent="ingestion">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 4. Raw Orders Store (Replaced Bronze) -->
+        <mxCell id="raw_store" value="&lt;b&gt;Raw Orders Store&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Append-Only Events&lt;br&gt;Delta Lake on S3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;strokeWidth=2;fontSize=13;spacingLeft=78;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="150" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="raw_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/oieduardorabelo/databricks-architecture-icons/icons/logos/delta-lake.svg;" vertex="1" parent="raw_store">
+          <mxGeometry x="12" y="25" width="58" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 5. Data Processing (PySpark ETL) -->
+        <mxCell id="processing" value="&lt;b&gt;Data Processing ETL&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;PySpark Validation,&lt;br&gt;Dedup &amp;amp; Schema Enforcement&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#10B981;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="680" y="320" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="processing_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachespark/apachespark-original.svg;" vertex="1" parent="processing">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 6. Cleansed Orders Store (Replaced Silver) -->
+        <mxCell id="cleansed_store" value="&lt;b&gt;Cleansed Orders Store&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Conformed &amp;amp; Deduplicated&lt;br&gt;Delta Lake on S3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F3FF;strokeColor=#8B5CF6;strokeWidth=2;fontSize=13;spacingLeft=78;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="320" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="cleansed_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/oieduardorabelo/databricks-architecture-icons/icons/logos/delta-lake.svg;" vertex="1" parent="cleansed_store">
+          <mxGeometry x="12" y="25" width="58" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 7. Curated Analytics Mart (Replaced Gold) -->
+        <mxCell id="curated_mart" value="&lt;b&gt;Curated Analytics Mart&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Business Metrics &amp;amp; Aggs&lt;br&gt;Delta Lake on S3&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;strokeWidth=2;fontSize=13;spacingLeft=78;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="490" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="curated_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/oieduardorabelo/databricks-architecture-icons/icons/logos/delta-lake.svg;" vertex="1" parent="curated_mart">
+          <mxGeometry x="12" y="25" width="58" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- 8. Serving: Athena & BI Dashboards -->
+        <mxCell id="analytics" value="&lt;b&gt;BI &amp;amp; Analytics Serving&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Amazon Athena &amp;amp; BI&lt;br&gt;Dashboards &amp;amp; Ad-Hoc SQL&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#9333EA;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="490" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="analytics_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/awslabs/aws-icons-for-plantuml@main/dist/Analytics/Athena.png;" vertex="1" parent="analytics">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 9. Apache Airflow Orchestration -->
+        <mxCell id="airflow" value="&lt;b&gt;Apache Airflow&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Pipeline Orchestration&lt;br&gt;Retries &amp;amp; SLA Tracking&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#0284C7;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="360" y="320" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="airflow_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apacheairflow/apacheairflow-original.svg;" vertex="1" parent="airflow">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 10. Observability & Monitoring -->
+        <mxCell id="monitoring" value="&lt;b&gt;Observability &amp;amp; Alerts&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;AWS CloudWatch&lt;br&gt;Metrics &amp;amp; SLA Failure Alerts&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#F59E0B;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="680" y="660" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="monitoring_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/awslabs/aws-icons-for-plantuml@main/dist/ManagementGovernance/CloudWatch.png;" vertex="1" parent="monitoring">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- 11. AWS S3 Storage Layer -->
+        <mxCell id="s3" value="&lt;b&gt;AWS S3 Storage&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#475569&quot;&gt;Persistent Object Store&lt;br&gt;(Encrypted with KMS)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#EA580C;strokeWidth=2;fontSize=13;spacingLeft=68;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="660" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3_icon" value="" style="shape=image;html=1;verticalAlign=middle;labelBackgroundColor=default;imageAspect=0;aspect=fixed;image=https://cdn.jsdelivr.net/gh/awslabs/aws-icons-for-plantuml@main/dist/Storage/SimpleStorageService.png;" vertex="1" parent="s3">
+          <mxGeometry x="12" y="21" width="48" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- EDGES / CONNECTIONS -->
+        <!-- Order -> Kafka -->
+        <mxCell id="e1" value="emit order events" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2563EB;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="order" target="kafka">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Kafka -> Ingestion -->
+        <mxCell id="e2" value="consume stream" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F59E0B;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="kafka" target="ingestion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Ingestion -> Raw Store -->
+        <mxCell id="e3" value="append raw events" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="ingestion" target="raw_store">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Raw Store -> Processing -->
+        <mxCell id="e4" value="read micro-batches" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#64748B;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="raw_store" target="processing">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1125" y="280"/>
+              <mxPoint x="960" y="280"/>
+              <mxPoint x="960" y="365"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Processing -> Cleansed Store -->
+        <mxCell id="e5" value="dedup &amp;amp; upsert (MERGE)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10B981;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="processing" target="cleansed_store">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Cleansed Store -> Curated Mart -->
+        <mxCell id="e6" value="aggregate metrics" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8B5CF6;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="cleansed_store" target="curated_mart">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Curated Mart -> Analytics -->
+        <mxCell id="e7_analytics" value="query &amp;amp; visualize" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9333EA;strokeWidth=2;fontSize=11;fontColor=#1E293B;endArrow=block;endFill=1;" edge="1" parent="1" source="curated_mart" target="analytics">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Airflow Orchestration -->
+        <mxCell id="e7" value="orchestrates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#0284C7;strokeWidth=1.5;fontSize=11;fontColor=#0284C7;endArrow=block;endFill=1;" edge="1" parent="1" source="airflow" target="ingestion">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="270"/>
+              <mxPoint x="750" y="270"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e8" value="schedules batch ETL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#0284C7;strokeWidth=1.5;fontSize=11;fontColor=#0284C7;endArrow=block;endFill=1;" edge="1" parent="1" source="airflow" target="processing">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Monitoring metrics -->
+        <mxCell id="e9" value="stream throughput" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#F59E0B;strokeWidth=1.5;fontSize=11;fontColor=#D97706;endArrow=block;endFill=1;" edge="1" parent="1" source="ingestion" target="monitoring">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="195"/>
+              <mxPoint x="650" y="705"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e10" value="ETL status" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#10B981;strokeWidth=1.5;fontSize=11;fontColor=#059669;endArrow=block;endFill=1;" edge="1" parent="1" source="processing" target="monitoring">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- S3 Data Persistence Bindings -->
+        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#EA580C;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="raw_store" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1270" y="195"/>
+              <mxPoint x="1270" y="705"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#EA580C;strokeWidth=1.5;endArrow=block;endFill=1;" edge="1" parent="1" source="cleansed_store" target="s3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1260" y="365"/>
+              <mxPoint x="1260" y="695"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="persisted on S3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#EA580C;strokeWidth=1.5;fontSize=11;fontColor=#EA580C;endArrow=block;endFill=1;" edge="1" parent="1" source="curated_mart" target="s3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
