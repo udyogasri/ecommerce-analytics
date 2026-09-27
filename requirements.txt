@@ -1,0 +1,8 @@
+pyspark==3.5.6
+delta-spark==3.3.2
+boto3
+pandas
+pyarrow
+kafka-python-ng
+python-dotenv
+pytest

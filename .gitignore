@@ -1,0 +1,23 @@
+# Environments
+venv/
+.env
+__pycache__/
+*.pyc
+
+# Data and Storage
+data/
+ecommerce_lakehouse_datasets/
+kafka/
+kafka.tgz
+
+# Logs
+logs/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
