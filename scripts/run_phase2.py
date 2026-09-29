@@ -46,7 +46,7 @@ def test_phase2_batch():
         customers_bronze_path = os.path.join(target_base, "bronze", "customers")
         df_cust = spark.read.format("delta").load(customers_bronze_path)
         logger.info(f"Verified Bronze Customers Table. Count: {df_cust.count()}")
-        df_cust.select("customer_id", "ingestion_timestamp", "batch_id").show(5, truncate=False)
+        df_cust.select("customer_id", "_ingestion_timestamp", "_batch_id").show(5, truncate=False)
     except Exception as e:
         logger.error(f"Verification failed: {e}")
         

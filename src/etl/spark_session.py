@@ -1,4 +1,11 @@
 import os
+os.environ["HADOOP_HOME"] = "C:\\hadoop"
+os.environ["PATH"] = "C:\\hadoop\\bin;" + os.environ.get("PATH", "")
+if "SPARK_HOME" in os.environ:
+    del os.environ["SPARK_HOME"]
+paths = os.environ["PATH"].split(os.pathsep)
+os.environ["PATH"] = os.pathsep.join([p for p in paths if "spark-4" not in p])
+
 from pyspark.sql import SparkSession
 from config.settings import config
 import logging
@@ -13,7 +20,7 @@ def create_spark_session(app_name="EcommerceLakehouse"):
             .master(config.SPARK_MASTER) \
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-            .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.3.2") \
+            .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.3.2,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3") \
             .config("spark.driver.host", "127.0.0.1") \
             .config("spark.driver.bindAddress", "127.0.0.1")
         

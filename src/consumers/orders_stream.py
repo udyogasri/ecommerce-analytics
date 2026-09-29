@@ -11,19 +11,19 @@ from src.etl.spark_session import create_spark_session
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class ClickstreamConsumer:
+class OrdersStreamConsumer:
     def __init__(self, spark_session, target_base_path):
         self.spark = spark_session
-        self.bronze_dir = os.path.join(target_base_path, "bronze", "clickstream")
-        self.quarantine_dir = os.path.join(target_base_path, "bronze", "quarantine", "clickstream")
-        self.checkpoint_dir = os.path.join(target_base_path, "checkpoints", "clickstream")
+        self.bronze_dir = os.path.join(target_base_path, "bronze", "orders_stream")
+        self.quarantine_dir = os.path.join(target_base_path, "bronze", "quarantine", "orders_stream")
+        self.checkpoint_dir = os.path.join(target_base_path, "checkpoints", "orders")
         
         self.kafka_bootstrap = config.KAFKA_BOOTSTRAP_SERVERS
-        self.topic = "clickstream"
-        self.schema = SCHEMAS["clickstream"]
+        self.topic = "orders"
+        self.schema = SCHEMAS["orders_event"]
 
     def consume(self):
-        logger.info(f"Starting Clickstream streaming consumer from {self.kafka_bootstrap}, topic {self.topic}")
+        logger.info(f"Starting Orders streaming consumer from {self.kafka_bootstrap}, topic {self.topic}")
         
         # Read stream from Kafka
         df = self.spark.readStream \
@@ -45,11 +45,11 @@ class ClickstreamConsumer:
          .withColumn("ingested_at", current_timestamp())
 
         # Split into Valid and Invalid (Quarantine)
+        # A record is valid if from_json succeeded (not null) and required fields are present
         valid_df = parsed_df.filter(
             col("parsed_value").isNotNull() & 
             col("parsed_value.event_id").isNotNull() & 
-            col("parsed_value.user_id").isNotNull() &
-            col("parsed_value.event_type").isNotNull()
+            col("parsed_value.order_id").isNotNull()
         ).select(
             "kafka_topic", "kafka_partition", "kafka_offset", "kafka_timestamp", "ingested_at",
             "parsed_value.*"
@@ -58,8 +58,7 @@ class ClickstreamConsumer:
         invalid_df = parsed_df.filter(
             col("parsed_value").isNull() | 
             col("parsed_value.event_id").isNull() | 
-            col("parsed_value.user_id").isNull() |
-            col("parsed_value.event_type").isNull()
+            col("parsed_value.order_id").isNull()
         ).select(
             "kafka_topic", "kafka_partition", "kafka_offset", "kafka_timestamp", "ingested_at",
             "raw_value"
@@ -81,15 +80,15 @@ class ClickstreamConsumer:
             .trigger(processingTime="5 seconds") \
             .start(self.quarantine_dir)
 
-        logger.info("Clickstream streaming queries started. Awaiting termination...")
+        logger.info("Orders streaming queries started. Awaiting termination...")
         return valid_query, invalid_query
 
 if __name__ == "__main__":
     try:
-        spark = create_spark_session("ClickstreamConsumer")
+        spark = create_spark_session("OrdersStreamingConsumer")
         target_base = os.path.join(config.DATA_DIR, 'local_test', 'lakehouse')
         
-        consumer = ClickstreamConsumer(spark, target_base)
+        consumer = OrdersStreamConsumer(spark, target_base)
         valid_query, invalid_query = consumer.consume()
         
         spark.streams.awaitAnyTermination()

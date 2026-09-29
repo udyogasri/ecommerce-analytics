@@ -1,75 +1,127 @@
 import os
 import sys
 import logging
-from datetime import datetime
 import uuid
+import hashlib
+from datetime import datetime, timezone
 
-from pyspark.sql.functions import current_timestamp, lit
-from pyspark.sql.types import StructType
+from pyspark.sql.functions import current_timestamp, lit, md5, concat_ws, col
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from config.settings import config
-from src.etl.spark_session import create_spark_session
+from config.schemas import SCHEMAS
+from src.ingestion.csv_loader import CSVLoader
 
 logger = logging.getLogger(__name__)
 
 class BatchIngestion:
-    def __init__(self, spark_session, target_base_path):
+    def __init__(self, spark_session, target_base_path, s3_uploader=None):
         self.spark = spark_session
         self.target_base_path = target_base_path
-        # Use a manifest directory to track processed files
-        self.manifest_dir = os.path.join(self.target_base_path, "manifests")
-        os.makedirs(self.manifest_dir, exist_ok=True)
+        self.s3_uploader = s3_uploader
+        self.csv_loader = CSVLoader(spark_session)
+        self.manifest_path = os.path.join(self.target_base_path, "manifests", "batch_runs")
         
-    def _is_file_processed(self, source_file, entity_name):
-        manifest_file = os.path.join(self.manifest_dir, f"{entity_name}_processed.txt")
-        if not os.path.exists(manifest_file):
+    def _get_file_metadata(self, file_path):
+        """Extracts file metadata for the manifest."""
+        stat = os.stat(file_path)
+        return {
+            "file_size": stat.st_size,
+            "mod_time": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
+        }
+        
+    def _is_file_processed(self, source_file, file_size, mod_time):
+        """Check the manifest Delta table to see if this exact file state was already processed."""
+        if not os.path.exists(self.manifest_path):
             return False
-        with open(manifest_file, 'r') as f:
-            processed = f.read().splitlines()
-        return source_file in processed
+            
+        try:
+            manifest_df = self.spark.read.format("delta").load(self.manifest_path)
+            # Check if there is a SUCCESS record for this exact file, size, and mod_time
+            count = manifest_df.filter(
+                (col("source_file") == source_file) &
+                (col("file_size") == file_size) &
+                (col("mod_time") == mod_time) &
+                (col("status") == "SUCCESS")
+            ).count()
+            return count > 0
+        except Exception as e:
+            logger.warning(f"Could not read manifest table (might be empty/corrupt): {e}")
+            return False
 
-    def _mark_file_processed(self, source_file, entity_name):
-        manifest_file = os.path.join(self.manifest_dir, f"{entity_name}_processed.txt")
-        with open(manifest_file, 'a') as f:
-            f.write(f"{source_file}\n")
+    def _record_manifest(self, source_file, file_size, mod_time, batch_id, status, row_count=0, error_details=""):
+        """Record the batch run outcome in the manifest table."""
+        # Create a single-row DataFrame
+        data = [{
+            "source_file": source_file,
+            "file_size": file_size,
+            "mod_time": mod_time,
+            "batch_id": batch_id,
+            "status": status,
+            "row_count": row_count,
+            "ingestion_timestamp": datetime.now(timezone.utc),
+            "error_details": error_details
+        }]
+        df = self.spark.createDataFrame(data)
+        
+        # Write to Delta table
+        df.write.format("delta").mode("append").option("mergeSchema", "true").save(self.manifest_path)
 
     def ingest_csv_to_bronze(self, source_file_path, entity_name, source_system="ecommerce_db"):
         source_file_name = os.path.basename(source_file_path)
+        file_meta = self._get_file_metadata(source_file_path)
         
-        # Idempotency check
-        if self._is_file_processed(source_file_name, entity_name):
-            logger.info(f"File {source_file_name} already processed for {entity_name}. Skipping.")
+        # Idempotency check using the manifest
+        if self._is_file_processed(source_file_name, file_meta["file_size"], file_meta["mod_time"]):
+            logger.info(f"File {source_file_name} with identical size and mod_time already processed. Skipping.")
             return True
 
         batch_id = str(uuid.uuid4())
         logger.info(f"Starting batch ingestion {batch_id} for {entity_name} from {source_file_name}")
         
         try:
-            # Read CSV
-            df = self.spark.read.csv(source_file_path, header=True, inferSchema=True)
+            # Optionally upload to S3 Raw tier first
+            if self.s3_uploader:
+                s3_raw_prefix = f"raw/{entity_name}"
+                self.s3_uploader.upload_file(source_file_path, s3_raw_prefix)
             
-            # Add metadata columns
-            df = df.withColumn("ingestion_timestamp", current_timestamp()) \
-                   .withColumn("source_file", lit(source_file_name)) \
-                   .withColumn("batch_id", lit(batch_id)) \
-                   .withColumn("source_system", lit(source_system))
+            # Load CSV using explicit schema
+            schema = SCHEMAS.get(entity_name)
+            if not schema:
+                raise ValueError(f"No schema defined for entity: {entity_name}")
+                
+            df = self.csv_loader.load(source_file_path, schema)
+            
+            # Add required strict metadata columns
+            # Calculate a record hash over all source columns for deduplication/tracking
+            source_cols = [c for c in df.columns if c != "_corrupt_record"]
+            
+            df_enriched = df \
+                   .withColumn("_ingestion_timestamp", current_timestamp()) \
+                   .withColumn("_source_file", lit(source_file_name)) \
+                   .withColumn("_batch_id", lit(batch_id)) \
+                   .withColumn("_source_system", lit(source_system)) \
+                   .withColumn("_record_hash", md5(concat_ws("||", *[col(c).cast("string") for c in source_cols])))
+            
+            row_count = df_enriched.count()
             
             # Write to Bronze Delta Table
             target_path = os.path.join(self.target_base_path, "bronze", entity_name)
             
             # Use append mode for incremental loads
-            df.write.format("delta") \
+            df_enriched.write.format("delta") \
                 .mode("append") \
                 .option("mergeSchema", "true") \
                 .save(target_path)
                 
-            self._mark_file_processed(source_file_name, entity_name)
-            logger.info(f"Successfully ingested {source_file_name} to Bronze {entity_name}")
+            # Record Success in Manifest
+            self._record_manifest(source_file_name, file_meta["file_size"], file_meta["mod_time"], batch_id, "SUCCESS", row_count)
+            logger.info(f"Successfully ingested {row_count} records from {source_file_name} to Bronze {entity_name}")
             return True
             
         except Exception as e:
             logger.error(f"Failed to ingest {source_file_name}: {e}")
+            self._record_manifest(source_file_name, file_meta["file_size"], file_meta["mod_time"], batch_id, "FAILED", 0, str(e))
             return False
 
     def process_all_historical(self, raw_dir):
@@ -79,7 +131,7 @@ class BatchIngestion:
             "orders": "orders.csv",
             "order_items": "order_items.csv",
             "support_tickets": "support_tickets.csv"
-            # clickstream is meant for streaming, but can be batch loaded if needed. We skip it here.
+            # clickstream is handled by Kafka streaming
         }
         
         success = True

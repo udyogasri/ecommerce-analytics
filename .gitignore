@@ -1,4 +1,4 @@
-# Environments
+﻿# Environments
 venv/
 .env
 __pycache__/
@@ -21,3 +21,24 @@ logs/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+
+# Airflow generated files
+
+airflow/airflow.db
+
+airflow/webserver_config.py
+
+airflow/airflow-webserver.pid
+
+airflow/logs/
+
+airflow/airflow.cfg
+
+
+# Airflow generated files
+airflow/airflow.db
+airflow/webserver_config.py
+airflow/airflow-webserver.pid
+airflow/logs/
+airflow/airflow.cfg
